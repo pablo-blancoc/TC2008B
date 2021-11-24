@@ -31,7 +31,7 @@
 
     "use strict";
 
-    let renderer, scene, camera, orbitControls, model, stats, gui;
+    let renderer, scene, camera, orbitControls, stats, gui;
 
     function init(event) {
         // RENDERER ENGINE
@@ -48,7 +48,7 @@
 
         // MODELS
         const scenary = new Scenary();
-        model = new SportsCar2(0, 0);
+        
 
         // SCENE
         new EXRLoader()
@@ -60,8 +60,6 @@
                 scene.background = texture;
                 scene.environment = texture;
 
-                render();
-
                 // model
 
             });
@@ -69,7 +67,24 @@
         // SCENE GRAPH
         const traffic1 = new TrafficLight(1, 1, 1);
         scene.add(scenary);
-        scene.add(model);
+
+        const cars = [];
+        cars.push(new SportsCar2(10,0));
+        cars.push(new SportsCar2(20,0));
+        cars.push(new SportsCar2(30,0));
+        cars.push(new SportsCar2(40,0));
+        cars.push(new SportsCar2(50,0));
+        cars.push(new SportsCar2(60,0));
+        cars.push(new SportsCar2(70,0));
+        cars.push(new SportsCar2(80,0));
+        cars.push(new SportsCar2(90,0));
+        cars.push(new SportsCar2(100,0));
+
+        for(let car of cars){
+            scene.add(car);
+        }
+
+    
         scene.add(traffic1);
 
         // CAMERA (PERSPECTIVE)
@@ -122,10 +137,10 @@
     }
 
     function updateScene() {
-        if (model && model.animate) {
-            model.move(0)
-            //model.rotation.y = model.rotation.y + 0.01;
-        }
+        // if (model && model.animate) {
+        //     model.move(0)
+        //     //model.rotation.y = model.rotation.y + 0.01;
+        // }
         if (camera && camera.viewNum == 0) {
             camera.orbitControls.update();
         }
@@ -252,7 +267,7 @@
         }
     }
 
-    class SportsCar extends THREE.Group {
+    class SportsCar extends THREE.Scene {
         constructor(gltfFileName = "./assets/gltf/car1.glb") {
             super();
             this.gltfFileName = gltfFileName;
@@ -262,13 +277,13 @@
         loadGLTFModel(gltfFileName) {
             // instantiate a loader
             // load a resource
-            model = this;
+            let localScene = this;
             gltfLoader.load(gltfFileName,
                 // called when resource is loaded
                 function (gltf) {
                     // SOLID
                     gltf.scene.position.y = -0.5;
-                    scene.add(gltf.scene);
+                    localScene.add(gltf.scene);
 
 
                 },
@@ -317,7 +332,7 @@
         loadGLTFModel(gltfFileName) {
             // instantiate a loader
             // load a resource
-            model = this;
+            const model = this;
             gltfLoader.load(gltfFileName,
                 // called when resource is loaded
                 function (gltf) {
