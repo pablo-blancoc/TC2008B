@@ -23,7 +23,7 @@
     import Stats from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/libs/stats.module';
     import {OBJLoader} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/OBJLoader.js';
     import {GLTFLoader} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/GLTFLoader.js';
-    import { EXRLoader } from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/EXRLoader.js';
+    import {EXRLoader} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/EXRLoader.js';
 
     const objLoader = new OBJLoader();
     const gltfLoader = new GLTFLoader();
@@ -39,7 +39,7 @@
         var rawFile = new XMLHttpRequest();
         rawFile.overrideMimeType("application/json");
         rawFile.open("GET", file, true);
-        rawFile.onreadystatechange = function() {
+        rawFile.onreadystatechange = function () {
             if (rawFile.readyState === 4 && rawFile.status == "200") {
                 callback(rawFile.responseText);
             }
@@ -67,44 +67,51 @@
             data = JSON.parse(text);
             console.log(data);
         });
-        
 
-        // SCENE
-        new EXRLoader()
-            .setPath('assets/textures/')
-            .load('4k.exr', function (texture) {
 
-                texture.mapping = THREE.EquirectangularReflectionMapping;
+                // SCENE
+                new EXRLoader()
+                    .setPath('assets/textures/')
+                    .load('4k.exr', function (texture) {
 
-                scene.background = texture;
-                scene.environment = texture;
+                        texture.mapping = THREE.EquirectangularReflectionMapping;
 
-                // model
+                        scene.background = texture;
+                        scene.environment = texture;
 
-            });
+                        // model
+
+                    });
 
         // SCENE GRAPH
-        const traffic1 = new TrafficLight(1, 1, 1);
+        const traffic1 = new TrafficLight(-17.8, 6.59, -7.95, 0);
+        const traffic2 = new TrafficLight(12.8, 6.59, 10, 180);
+        const traffic3 = new TrafficLight(7.5, 6.59, -18.5, 90);
+        const traffic4 = new TrafficLight(-8.55, 6.59, 15.1, 270);
+        scene.add(traffic1);
+        scene.add(traffic2);
+        scene.add(traffic3);
+        scene.add(traffic4);
+        traffic3.changeState(2)
+
         scene.add(scenary);
 
-        // const cars = [];
-        cars.push(new SportsCar2(10,0));
-        cars.push(new SportsCar2(20,0));
-        cars.push(new SportsCar2(30,0));
-        cars.push(new SportsCar2(40,0));
-        cars.push(new SportsCar2(50,0));
-        cars.push(new SportsCar2(60,0));
-        cars.push(new SportsCar2(70,0));
-        cars.push(new SportsCar2(80,0));
-        cars.push(new SportsCar2(90,0));
-        cars.push(new SportsCar2(100,0));
+        /*        const cars = [];
+                cars.push(new SportsCar2(10,0));
+                cars.push(new SportsCar2(20,0));
+                cars.push(new SportsCar2(30,0));
+                cars.push(new SportsCar2(40,0));
+                cars.push(new SportsCar2(50,0));
+                cars.push(new SportsCar2(60,0));
+                cars.push(new SportsCar2(70,0));
+                cars.push(new SportsCar2(80,0));
+                cars.push(new SportsCar2(90,0));
+                cars.push(new SportsCar2(100,0));
 
-        for(let car of cars){
-            scene.add(car);
-        }
+                for(let car of cars){
+                    scene.add(car);
+                }*/
 
-    
-        scene.add(traffic1);
 
         // CAMERA (PERSPECTIVE)
         const fov = 60;    // Field ov view
@@ -157,7 +164,7 @@
 
     function updateScene() {
         if (loadProgress == 10) {
-            for(let car of cars){
+            for (let car of cars) {
                 car.move(0, 0);
             }
             //model.rotation.y = model.rotation.y + 0.01;
@@ -290,7 +297,7 @@
     }
 
     class SportsCar extends THREE.Scene {
-        constructor(gltfFileName = "./assets/gltf/cyber.glb") {
+        constructor(gltfFileName = "./assets/gltf/car1.glb") {
             super();
             this.gltfFileName = gltfFileName;
             this.loadGLTFModel(gltfFileName);
@@ -332,8 +339,8 @@
 
         move(x, y) {
             let direction;
-            if (this.position.x  < x) {
-                direction =  90 * (Math.PI / 180)
+            if (this.position.x < x) {
+                direction = 90 * (Math.PI / 180)
             } else {
                 direction = 0;
             }
@@ -359,7 +366,7 @@
                 // called when resource is loaded
                 function (gltf) {
                     // SOLID
-                    gltf.scene.position.y = -0.5;
+                    gltf.scene.position.y = 0.5;
                     scene.add(gltf.scene);
 
 
@@ -390,17 +397,107 @@
     }
 
     class TrafficLight extends THREE.Group {
-        constructor(x, y, z) {
+        constructor(x, y, z, direction) {
             super();
-            const greenLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            const yellowLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            const redLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            greenLight.position.set( x + 10, y, z);
-            yellowLight.position.set( x + 10, y, z);
-            redLight.position.set( x + 10, y, z);
-            scene.add(greenLight);
-            scene.add(yellowLight);
-            scene.add(redLight);
+            const geometry = new THREE.SphereGeometry(0.15, 32, 16);
+            this.greenMaterial = new THREE.MeshStandardMaterial({
+                emissive: 0x00ff00,
+                emissiveIntensity: 0,
+                color: 0x000000,
+                roughness: 1
+            });
+            this.yellowMaterial = new THREE.MeshStandardMaterial({
+                emissive: 0xffff00,
+                emissiveIntensity: 1,
+                color: 0x000000,
+                roughness: 1
+            });
+            this.redMaterial = new THREE.MeshStandardMaterial({
+                emissive: 0xff0000,
+                emissiveIntensity: 0,
+                color: 0x000000,
+                roughness: 1
+            });
+
+
+
+            this.greenMesh = new THREE.Mesh(geometry, this.greenMaterial);
+            this.yellowMesh = new THREE.Mesh(geometry, this.yellowMaterial);
+            this.redMesh = new THREE.Mesh(geometry, this.redMaterial);
+            this.greenLight = new THREE.PointLight(0x00ff00, 1, 10);
+            this.yellowLight = new THREE.PointLight(0xffff00, 1, 10);
+            this.redLight = new THREE.PointLight(0xff0000, 1, 10);
+
+            const offset = 0.36;
+            let xOffset;
+            let zOffset;
+
+            switch (direction) {
+                case 0:
+                    zOffset = -offset
+                    xOffset = 0;
+                    break;
+                case 90:
+                    zOffset = 0
+                    xOffset = + offset;
+                    break;
+                case 180:
+                    zOffset = +offset
+                    xOffset = 0;
+                    break;
+                case 270:
+                    zOffset = 0;
+                    xOffset = -offset;
+                    break;
+
+            }
+
+            this.greenMesh.position.set(x, y, z)
+            this.yellowMesh.position.set(x + xOffset, y, z + zOffset)
+            this.redMesh.position.set(x + (xOffset * 2), y, z + (zOffset * 2))
+            this.greenLight.position.set(x, y, z);
+            this.yellowLight.position.set(x + xOffset, y, z + zOffset)
+            this.redLight.position.set(x + (xOffset * 2), y, z + (zOffset * 2))
+
+            this.add(this.greenLight);
+            this.add(this.yellowLight);
+            this.add(this.redLight);
+            this.add(this.greenMesh);
+            this.add(this.redMesh);
+            this.add(this.yellowMesh);
+
+            this.changeState(0);
+        }
+
+        changeState(state) {
+            const lightOff = 0.1
+            const lightOn = 10
+            const emissivityOn = 1;
+            const emissivityOff = 0;
+
+            this.greenLight.intensity = lightOff;
+            this.yellowLight.intensity = lightOff;
+            this.redLight.intensity = lightOff;
+
+            this.greenMesh.material.emissiveIntensity = emissivityOff;
+            this.yellowMesh.material.emissiveIntensity = emissivityOff;
+            this.redMesh.material.emissiveIntensity = emissivityOff;
+
+            switch (state) {
+                case 0:
+                    this.greenLight.intensity = lightOn;
+                    this.greenMesh.material.emissiveIntensity = emissivityOn;
+                    break;
+                case 1:
+                    this.yellowLight.intensity = lightOn;
+                    this.yellowMesh.material.emissiveIntensity = emissivityOn;
+                    break;
+                case 2:
+                    this.redLight.intensity = lightOn;
+                    this.redMesh.material.emissiveIntensity = emissivityOn;
+                    break;
+            }
+
         }
     }
 </script>
