@@ -31,7 +31,21 @@
 
     "use strict";
 
-    let renderer, scene, camera, orbitControls, stats, gui;
+    let renderer, scene, camera, orbitControls, stats, gui, data;
+    let loadProgress = 0;
+    let cars = [];
+
+    function readTextFile(file, callback) {
+        var rawFile = new XMLHttpRequest();
+        rawFile.overrideMimeType("application/json");
+        rawFile.open("GET", file, true);
+        rawFile.onreadystatechange = function() {
+            if (rawFile.readyState === 4 && rawFile.status == "200") {
+                callback(rawFile.responseText);
+            }
+        }
+        rawFile.send(null);
+    }
 
     function init(event) {
         // RENDERER ENGINE
@@ -42,12 +56,17 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-
-
         scene = new THREE.Scene();
 
         // MODELS
         const scenary = new Scenary();
+
+        // LOAD JSON
+        //usage:
+        readTextFile("data.json", text => {
+            data = JSON.parse(text);
+            console.log(data);
+        });
         
 
         // SCENE
@@ -68,7 +87,7 @@
         const traffic1 = new TrafficLight(1, 1, 1);
         scene.add(scenary);
 
-        const cars = [];
+        // const cars = [];
         cars.push(new SportsCar2(10,0));
         cars.push(new SportsCar2(20,0));
         cars.push(new SportsCar2(30,0));
@@ -137,10 +156,13 @@
     }
 
     function updateScene() {
-        // if (model && model.animate) {
-        //     model.move(0)
-        //     //model.rotation.y = model.rotation.y + 0.01;
-        // }
+        if (loadProgress == 10) {
+            for(let car of cars){
+                car.move(0, 0);
+            }
+            //model.rotation.y = model.rotation.y + 0.01;
+        }
+        console.log(loadProgress);
         if (camera && camera.viewNum == 0) {
             camera.orbitControls.update();
         }
@@ -268,7 +290,7 @@
     }
 
     class SportsCar extends THREE.Scene {
-        constructor(gltfFileName = "./assets/gltf/car1.glb") {
+        constructor(gltfFileName = "./assets/gltf/cyber.glb") {
             super();
             this.gltfFileName = gltfFileName;
             this.loadGLTFModel(gltfFileName);
@@ -282,10 +304,10 @@
                 // called when resource is loaded
                 function (gltf) {
                     // SOLID
-                    gltf.scene.position.y = -0.5;
+                    gltf.scene.position.y = 0.5;
                     localScene.add(gltf.scene);
 
-
+                    loadProgress += 1;
                 },
                 // called when loading is in progresses
                 function (xhr) {
