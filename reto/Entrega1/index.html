@@ -111,8 +111,6 @@
 
         // const cars = [];
 
-        scene.add(traffic1);
-
         // CAMERA (PERSPECTIVE)
         const fov = 60; // Field ov view
         const aspect = window.innerWidth / window.innerHeight;
@@ -399,12 +397,16 @@
         moveCar(moveX, moveZ) {
           let direction;
           if (this.position.x < moveX) {
+            // Towards east
             direction = Math.PI / 2;
           } else if (this.position.x > moveX) {
+            // Towards west
             direction = (3 * Math.PI) / 2;
           } else if (this.position.z > moveZ) {
+            // Towards north
             direction = 2 * Math.PI;
           } else if (this.position.z < moveZ) {
+            // Towards south
             direction = Math.PI;
           }
 
