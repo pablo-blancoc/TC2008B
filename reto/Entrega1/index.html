@@ -1,55 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-        }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+      }
     </style>
-</head>
-<body>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
-<script type="module">
-    /*  import * as THREE from 'three'*/
-    import * as THREE from 'https://cdn.skypack.dev/three@0.134.0';
-    import {OrbitControls} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/controls/OrbitControls';
-    import Stats from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/libs/stats.module';
-    import {OBJLoader} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/OBJLoader.js';
-    import {GLTFLoader} from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/GLTFLoader.js';
-    import { EXRLoader } from 'https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/EXRLoader.js';
+  </head>
+  <body>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"
+    ></script>
+    <script type="module">
+      /*  import * as THREE from 'three'*/
+      import * as THREE from "https://cdn.skypack.dev/three@0.134.0";
+      import { OrbitControls } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/controls/OrbitControls";
+      import Stats from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/libs/stats.module";
+      import { OBJLoader } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/OBJLoader.js";
+      import { GLTFLoader } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/GLTFLoader.js";
+      import { EXRLoader } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/EXRLoader.js";
 
-    const objLoader = new OBJLoader();
-    const gltfLoader = new GLTFLoader();
+      const objLoader = new OBJLoader();
+      const gltfLoader = new GLTFLoader();
 
+      ("use strict");
 
-    "use strict";
+      let renderer,
+        scene,
+        camera,
+        orbitControls,
+        stats,
+        gui,
+        data,
+        dataReady = false,
+        k = 0;
+      let loadProgress = 0;
+      let cars = [];
 
-    let renderer, scene, camera, orbitControls, stats, gui, data;
-    let loadProgress = 0;
-    let cars = [];
-
-    function readTextFile(file, callback) {
+      function readTextFile(file, callback) {
         var rawFile = new XMLHttpRequest();
         rawFile.overrideMimeType("application/json");
         rawFile.open("GET", file, true);
-        rawFile.onreadystatechange = function() {
-            if (rawFile.readyState === 4 && rawFile.status == "200") {
-                callback(rawFile.responseText);
-            }
-        }
+        rawFile.onreadystatechange = function () {
+          if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+          }
+        };
         rawFile.send(null);
-    }
+      }
 
-    function init(event) {
+      function init(event) {
         // RENDERER ENGINE
-        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
         renderer.setClearColor(new THREE.Color(0, 0, 0));
@@ -63,57 +74,39 @@
 
         // LOAD JSON
         //usage:
-        readTextFile("data.json", text => {
-            data = JSON.parse(text);
-            console.log(data);
+        readTextFile("data.json", (text) => {
+          data = JSON.parse(text);
+          dataReady = true;
+          console.log(data);
         });
-        
 
         // SCENE
         new EXRLoader()
-            .setPath('assets/textures/')
-            .load('4k.exr', function (texture) {
+          .setPath("assets/textures/")
+          .load("4k.exr", function (texture) {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
 
-                texture.mapping = THREE.EquirectangularReflectionMapping;
+            scene.background = texture;
+            scene.environment = texture;
 
-                scene.background = texture;
-                scene.environment = texture;
-
-                // model
-
-            });
+            // model
+          });
 
         // SCENE GRAPH
         const traffic1 = new TrafficLight(1, 1, 1);
         scene.add(scenary);
 
         // const cars = [];
-        cars.push(new SportsCar2(10,0));
-        cars.push(new SportsCar2(20,0));
-        cars.push(new SportsCar2(30,0));
-        cars.push(new SportsCar2(40,0));
-        cars.push(new SportsCar2(50,0));
-        cars.push(new SportsCar2(60,0));
-        cars.push(new SportsCar2(70,0));
-        cars.push(new SportsCar2(80,0));
-        cars.push(new SportsCar2(90,0));
-        cars.push(new SportsCar2(100,0));
 
-        for(let car of cars){
-            scene.add(car);
-        }
-
-    
         scene.add(traffic1);
 
         // CAMERA (PERSPECTIVE)
-        const fov = 60;    // Field ov view
+        const fov = 60; // Field ov view
         const aspect = window.innerWidth / window.innerHeight;
         const near = 0.01;
         const far = 10000.0;
         camera = new Camera(fov, aspect, near, far);
         camera.position.set(-100, 100, 300);
-
 
         // CAMERA CONTROLS
         orbitControls = new OrbitControls(camera, renderer.domElement);
@@ -129,280 +122,322 @@
         gui = new dat.GUI();
         // SCENE-MENU
         const guiSceneMenu = gui.addFolder("Scene Menu");
-        guiSceneMenu.add(scenary.axes, "visible").setValue(scenary.axes.visible).name("World Axes").listen().onChange(function (value) {
+        guiSceneMenu
+          .add(scenary.axes, "visible")
+          .setValue(scenary.axes.visible)
+          .name("World Axes")
+          .listen()
+          .onChange(function (value) {
             scenary.axes.setVisible(value);
-        });
+          });
         guiSceneMenu.open();
-
 
         // MODEL-MENU
         const guiCameraMenu = gui.addFolder("Camera Menu");
         // GUI-Model
 
-        guiCameraMenu.add(camera, "viewNum").min(0).max(5).step(1).setValue(camera.viewNum).name("Change view").listen().onChange(function (value) {
+        guiCameraMenu
+          .add(camera, "viewNum")
+          .min(0)
+          .max(5)
+          .step(1)
+          .setValue(camera.viewNum)
+          .name("Change view")
+          .listen()
+          .onChange(function (value) {
             camera.updateView();
-        });
+          });
 
         // DRAW SCENE IN A RENDER LOOP (ANIMATION)
         renderLoop();
-    }
+      }
 
-    function renderLoop() {
+      function renderLoop() {
         stats.begin();
         renderer.render(scene, camera); // DRAW THE SCENE GRAPH
         updateScene();
         stats.end();
         requestAnimationFrame(renderLoop);
-    }
+      }
 
-    function updateScene() {
-        if (loadProgress == 10) {
-            for(let car of cars){
-                car.move(0, 0);
+      function updateScene() {
+        if (dataReady) {
+          {
+            if (loadProgress == data.cars_number) {
+              for (let car of cars) {
+                car.moveCar(0, 0);
+
+                // car.position.x = 0;
+                // car.position.z = 0;
+              }
             }
             //model.rotation.y = model.rotation.y + 0.01;
-        }
-        console.log(loadProgress);
-        if (camera && camera.viewNum == 0) {
+          }
+
+          if (camera && camera.viewNum == 0) {
             camera.orbitControls.update();
-        }
-        if (camera && camera.viewNum == 5) {
+          }
+          if (camera && camera.viewNum == 5) {
             camera.setInModelView(model);
+          }
+          console.log(data.frames.length);
+          if (k < data.frames.length) {
+            for (let i = 0; i < data.frames[k].cars.length; i++) {
+              const carID = data.frames[k].cars[i].id;
+              const carX = data.frames[k].cars[i].x;
+              const carZ = data.frames[k].cars[i].y;
+
+              let car = scene.getObjectByName(carID);
+
+              if (!car) {
+                let car = new SportsCar2(carX, carZ);
+                car.name = carID;
+                cars.push(car);
+                console.log(cars);
+                scene.add(car);
+              } else {
+                car.moveCar(carX - 500, carZ - 500);
+              }
+            }
+          }
+
+          k++;
         }
-    }
+      }
 
-    // EVENT LISTENERS & HANDLERS
-    document.addEventListener("DOMContentLoaded", init);
+      // EVENT LISTENERS & HANDLERS
+      document.addEventListener("DOMContentLoaded", init);
 
-    window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }, false);
+      window.addEventListener(
+        "resize",
+        () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        },
+        false
+      );
 
-    class Camera extends THREE.PerspectiveCamera {
+      class Camera extends THREE.PerspectiveCamera {
         constructor(
-            fov = 60,
-            aspect = window.innerWidth / window.innerHeight,
-            near = 0.01,
-            far = 10000.0,
+          fov = 60,
+          aspect = window.innerWidth / window.innerHeight,
+          near = 0.01,
+          far = 10000.0
         ) {
-            super(fov, aspect, near, far);
+          super(fov, aspect, near, far);
 
-            this.viewNum = 0;
+          this.viewNum = 0;
 
-            // orbit controls
-            this.orbitControls = new OrbitControls(
-                this,
-                renderer.domElement
-            );
-            this.orbitControls.update();
-
+          // orbit controls
+          this.orbitControls = new OrbitControls(this, renderer.domElement);
+          this.orbitControls.update();
         }
 
         setPerspectiveView() {
-            this.position.set(-100, 100, 300);
-            this.orbitControls.target = new THREE.Vector3(0, 0, 0);
-            this.up.set(0, 1, 0);
-            this.orbitControls.update();
+          this.position.set(-100, 100, 300);
+          this.orbitControls.target = new THREE.Vector3(0, 0, 0);
+          this.up.set(0, 1, 0);
+          this.orbitControls.update();
         }
 
         setTopView() {
-            this.position.set(0, 300, 0);
-            this.orbitControls.target = new THREE.Vector3(0, 0, 0);
-            this.up.set(-1, 0, 0);
-            this.orbitControls.update();
+          this.position.set(0, 300, 0);
+          this.orbitControls.target = new THREE.Vector3(0, 0, 0);
+          this.up.set(-1, 0, 0);
+          this.orbitControls.update();
         }
 
         setFrontView() {
-            this.position.set(0, 1.8, 300);
-            this.orbitControls.target = new THREE.Vector3(0, 0, 0);
-            this.up.set(0, 1, 0);
-            this.orbitControls.update();
+          this.position.set(0, 1.8, 300);
+          this.orbitControls.target = new THREE.Vector3(0, 0, 0);
+          this.up.set(0, 1, 0);
+          this.orbitControls.update();
         }
 
         setSideView() {
-            this.position.set(300, 1.8, 0);
-            this.orbitControls.target = new THREE.Vector3(0, 0, 0);
-            this.up.set(0, 1, 0);
-            this.orbitControls.update();
+          this.position.set(300, 1.8, 0);
+          this.orbitControls.target = new THREE.Vector3(0, 0, 0);
+          this.up.set(0, 1, 0);
+          this.orbitControls.update();
         }
 
         setInModelView(model) {
-            this.position.set(
-                model.position.x - 0.5,
-                model.position.y + 1.7,
-                model.position.z
-            );
-            // Camera follows the model + 3 units
-            this.orbitControls.target = new THREE.Vector3(
-                model.position.x + 5,
-                model.position.y + 1,
-                model.position.z - 60
-            );
-            this.up.set(0, 1, 0);
-            this.orbitControls.update();
+          this.position.set(
+            model.position.x - 0.5,
+            model.position.y + 1.7,
+            model.position.z
+          );
+          // Camera follows the model + 3 units
+          this.orbitControls.target = new THREE.Vector3(
+            model.position.x + 5,
+            model.position.y + 1,
+            model.position.z - 60
+          );
+          this.up.set(0, 1, 0);
+          this.orbitControls.update();
         }
 
         setAutoRotate(value, speed = 0.5) {
-            this.orbitControls.autoRotate = value;
-            this.orbitControls.autoRotateSpeed = speed;
-            this.orbitControls.update();
+          this.orbitControls.autoRotate = value;
+          this.orbitControls.autoRotateSpeed = speed;
+          this.orbitControls.update();
         }
 
         updateView() {
-            this.setAutoRotate(false);
-            switch (this.viewNum) {
-                case 0:
-                    this.setAutoRotate(true);
-                    break;
-                case 1:
-                    this.setPerspectiveView();
-                    break;
-                case 2:
-                    this.setTopView();
-                    break;
-                case 3:
-                    this.setFrontView();
-                    break;
-                case 4:
-                    this.setSideView();
-                    break;
-                case 5:
-                    this.setInModelView(model);
-                    break;
-            }
+          this.setAutoRotate(false);
+          switch (this.viewNum) {
+            case 0:
+              this.setAutoRotate(true);
+              break;
+            case 1:
+              this.setPerspectiveView();
+              break;
+            case 2:
+              this.setTopView();
+              break;
+            case 3:
+              this.setFrontView();
+              break;
+            case 4:
+              this.setSideView();
+              break;
+            case 5:
+              this.setInModelView(model);
+              break;
+          }
         }
+      }
 
-    }
-
-    class Axes extends THREE.AxesHelper {
+      class Axes extends THREE.AxesHelper {
         constructor(size = 10, visible = true) {
-            super(size);
-            this.size = size;
-            this.visible = visible;
-            this.position.set(0, 1, 0);
+          super(size);
+          this.size = size;
+          this.visible = visible;
+          this.position.set(0, 1, 0);
         }
 
         setVisible(value) {
-            this.visible = value;
+          this.visible = value;
         }
-    }
+      }
 
-    class SportsCar extends THREE.Scene {
-        constructor(gltfFileName = "./assets/gltf/cyber.glb") {
-            super();
-            this.gltfFileName = gltfFileName;
-            this.loadGLTFModel(gltfFileName);
+      class SportsCar extends THREE.Scene {
+        constructor(gltfFileName = "./assets/gltf/Car1.glb") {
+          super();
+          this.gltfFileName = gltfFileName;
+          this.loadGLTFModel(gltfFileName);
         }
 
         loadGLTFModel(gltfFileName) {
-            // instantiate a loader
-            // load a resource
-            let localScene = this;
-            gltfLoader.load(gltfFileName,
-                // called when resource is loaded
-                function (gltf) {
-                    // SOLID
-                    gltf.scene.position.y = 0.5;
-                    localScene.add(gltf.scene);
+          // instantiate a loader
+          // load a resource
+          let localScene = this;
+          gltfLoader.load(
+            gltfFileName,
+            // called when resource is loaded
+            function (gltf) {
+              // SOLID
+              gltf.scene.position.y = 0.5;
+              localScene.add(gltf.scene);
 
-                    loadProgress += 1;
-                },
-                // called when loading is in progresses
-                function (xhr) {
-                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-                },
-                // called when loading has errors
-                function (error) {
-                    console.log('An error happened' + error);
-                }
-            );
-        }
-    }
-
-    class SportsCar2 extends SportsCar {
-        constructor(x, z) {
-            super();
-            this.x = x;
-            this.z = z;
-            this.animate = false;
-            this.position.set(x, 0, z);
-        }
-
-        move(x, y) {
-            let direction;
-            if (this.position.x  < x) {
-                direction =  90 * (Math.PI / 180)
-            } else {
-                direction = 0;
+              loadProgress += 1;
+            },
+            // called when loading is in progresses
+            function (xhr) {
+              console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+            },
+            // called when loading has errors
+            function (error) {
+              console.log("An error happened" + error);
             }
-
-            this.position.x = x;
-            this.position.y = y;
-            this.rotation.set(0, direction, 0);
+          );
         }
-    }
+      }
 
-    class Streets extends THREE.Group {
+      class SportsCar2 extends SportsCar {
+        constructor(x, z) {
+          super();
+          this.x = x;
+          this.z = z;
+          this.animate = false;
+          this.position.set(x, 0, z);
+        }
+
+        moveCar(moveX, moveZ) {
+          let direction;
+          if (this.position.x < moveX) {
+            direction = 2 * Math.PI;
+          } else if (this.position.x > moveX) {
+            direction = Math.PI;
+          } else if (this.position.z > moveZ) {
+            direction = Math.PI / 2;
+          } else if (this.position.z < moveZ) {
+            direction = (3 * Math.PI) / 2;
+          }
+
+          this.position.set(moveX, 0, moveZ);
+          this.rotation.set(0, direction, 0);
+        }
+      }
+
+      class Streets extends THREE.Group {
         constructor(gltfFileName = "./assets/gltf/street.glb") {
-            super();
-            this.gltfFileName = gltfFileName;
-            this.loadGLTFModel(gltfFileName);
+          super();
+          this.gltfFileName = gltfFileName;
+          this.loadGLTFModel(gltfFileName);
         }
 
         loadGLTFModel(gltfFileName) {
-            // instantiate a loader
-            // load a resource
-            const model = this;
-            gltfLoader.load(gltfFileName,
-                // called when resource is loaded
-                function (gltf) {
-                    // SOLID
-                    gltf.scene.position.y = -0.5;
-                    scene.add(gltf.scene);
-
-
-                },
-                // called when loading is in progresses
-                function (xhr) {
-                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-                },
-                // called when loading has errors
-                function (error) {
-                    console.log('An error happened' + error);
-                }
-            );
+          // instantiate a loader
+          // load a resource
+          const model = this;
+          gltfLoader.load(
+            gltfFileName,
+            // called when resource is loaded
+            function (gltf) {
+              // SOLID
+              gltf.scene.position.y = -0.5;
+              scene.add(gltf.scene);
+            },
+            // called when loading is in progresses
+            function (xhr) {
+              console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+            },
+            // called when loading has errors
+            function (error) {
+              console.log("An error happened" + error);
+            }
+          );
         }
-    }
+      }
 
-    class Scenary extends THREE.Group {
+      class Scenary extends THREE.Group {
         constructor(size = 1000) {
-            super();
-            this.axes = new Axes(size);
-            this.streets = new Streets();
+          super();
+          this.axes = new Axes(size);
+          this.streets = new Streets();
 
-            // CHILDREN
-            this.add(this.axes);
-            this.add(this.streets)
-
+          // CHILDREN
+          this.add(this.axes);
+          this.add(this.streets);
         }
-    }
+      }
 
-    class TrafficLight extends THREE.Group {
+      class TrafficLight extends THREE.Group {
         constructor(x, y, z) {
-            super();
-            const greenLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            const yellowLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            const redLight = new THREE.PointLight( 0xff0000, 1, 100 );
-            greenLight.position.set( x + 10, y, z);
-            yellowLight.position.set( x + 10, y, z);
-            redLight.position.set( x + 10, y, z);
-            scene.add(greenLight);
-            scene.add(yellowLight);
-            scene.add(redLight);
+          super();
+          const greenLight = new THREE.PointLight(0xff0000, 1, 100);
+          const yellowLight = new THREE.PointLight(0xff0000, 1, 100);
+          const redLight = new THREE.PointLight(0xff0000, 1, 100);
+          greenLight.position.set(x + 10, y, z);
+          yellowLight.position.set(x + 10, y, z);
+          redLight.position.set(x + 10, y, z);
+          scene.add(greenLight);
+          scene.add(yellowLight);
+          scene.add(redLight);
         }
-    }
-</script>
-</body>
+      }
+    </script>
+  </body>
 </html>
