@@ -154,8 +154,12 @@
 
       function renderLoop() {
         stats.begin();
+        setTimeout( () => {
+          requestAnimationFrame( updateScene );
+        }, 1000 / 24 );
+
         renderer.render(scene, camera); // DRAW THE SCENE GRAPH
-        updateScene();
+        //updateScene();
         stats.end();
         requestAnimationFrame(renderLoop);
       }
@@ -183,9 +187,10 @@
           console.log(data.frames.length);
           if (k < data.frames.length) {
             for (let i = 0; i < data.frames[k].cars.length; i++) {
+              let scaleFactorLocal = 1;
               const carID = data.frames[k].cars[i].id;
-              const carX = data.frames[k].cars[i].x;
-              const carZ = data.frames[k].cars[i].y;
+              const carX = data.frames[k].cars[i].x / scaleFactorLocal;
+              const carZ = data.frames[k].cars[i].y / scaleFactorLocal;
 
               let car = scene.getObjectByName(carID);
 
@@ -196,7 +201,8 @@
                 console.log(cars);
                 scene.add(car);
               } else {
-                car.moveCar(carX - 500, carZ - 500);
+                //car.moveCar(carX - 500 / scaleFactorLocal, carZ - 500 / scaleFactorLocal);
+                car.moveCar(carX , carZ );
               }
             }
           }
@@ -361,22 +367,22 @@
           this.x = x;
           this.z = z;
           this.animate = false;
-          this.position.set(x, 0, z);
+          this.position.set(x, -0.5, z);
         }
 
         moveCar(moveX, moveZ) {
           let direction;
           if (this.position.x < moveX) {
-            direction = 2 * Math.PI;
-          } else if (this.position.x > moveX) {
-            direction = Math.PI;
-          } else if (this.position.z > moveZ) {
             direction = Math.PI / 2;
-          } else if (this.position.z < moveZ) {
+          } else if (this.position.x > moveX) {
             direction = (3 * Math.PI) / 2;
+          } else if (this.position.z > moveZ) {
+            direction = 2 * Math.PI;
+          } else if (this.position.z < moveZ) {
+            direction = Math.PI;
           }
 
-          this.position.set(moveX, 0, moveZ);
+          this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
         }
       }
