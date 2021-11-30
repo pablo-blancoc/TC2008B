@@ -21,7 +21,7 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"
     ></script>
     <script type="module">
-      /*  import * as THREE from 'three'*/
+      // Importing all the libraries and packages needed
       import * as THREE from "https://cdn.skypack.dev/three@0.134.0";
       import { OrbitControls } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/controls/OrbitControls";
       import Stats from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/libs/stats.module";
@@ -29,11 +29,13 @@
       import { GLTFLoader } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/GLTFLoader.js";
       import { EXRLoader } from "https://cdn.skypack.dev/three@0.134.0/examples/jsm/loaders/EXRLoader.js";
 
-      const objLoader = new OBJLoader();
+      // Defining the gltf loader which is the figure we used for loading the object
+
       const gltfLoader = new GLTFLoader();
 
       ("use strict");
 
+      // Global variables used
       let renderer,
         scene,
         camera,
@@ -48,7 +50,6 @@
         traffic3,
         traffic4;
       let loadProgress = 0;
-      let cars = [];
 
       function readTextFile(file, callback) {
         var rawFile = new XMLHttpRequest();
@@ -109,8 +110,6 @@
 
         scene.add(scenary);
 
-        // const cars = [];
-
         // CAMERA (PERSPECTIVE)
         const fov = 60; // Field ov view
         const aspect = window.innerWidth / window.innerHeight;
@@ -170,32 +169,19 @@
         }, 1000 / 24);
 
         renderer.render(scene, camera); // DRAW THE SCENE GRAPH
-        //updateScene();
         stats.end();
         requestAnimationFrame(renderLoop);
       }
 
       function updateScene() {
         if (dataReady) {
-          {
-            if (loadProgress == data.cars_number) {
-              for (let car of cars) {
-                car.moveCar(0, 0);
-
-                // car.position.x = 0;
-                // car.position.z = 0;
-              }
-            }
-            //model.rotation.y = model.rotation.y + 0.01;
-          }
-
           if (camera && camera.viewNum == 0) {
             camera.orbitControls.update();
           }
           if (camera && camera.viewNum == 5) {
             camera.setInModelView(model);
           }
-          console.log(data.frames.length);
+
           if (k < data.frames.length) {
             for (let i = 0; i < data.frames[k].cars.length; i++) {
               let scaleFactorLocal = 1;
@@ -208,11 +194,8 @@
               if (!car) {
                 let car = new SportsCar2(carX, carZ);
                 car.name = carID;
-                cars.push(car);
-                console.log(cars);
                 scene.add(car);
               } else {
-                //car.moveCar(carX - 500 / scaleFactorLocal, carZ - 500 / scaleFactorLocal);
                 car.moveCar(carX, carZ);
               }
             }
