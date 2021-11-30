@@ -215,9 +215,12 @@
                 traffic2.changeState(traffLightState);
               }
             }
+            k++;
           }
-
-          k++;
+          if(k == data.frames.length ) {
+            console.log("End of data");
+            k++;
+          }
         }
       }
 
@@ -383,12 +386,8 @@
         moveCar(moveX, moveZ) {
           let deltaX = moveX - this.position.x;
           let deltaZ = moveZ - this.position.z;
-          if(this.name == 5){
-            console.log(this.position.x, this.position.z);
-            console.log(moveX, moveZ);
-            console.log("Car 1: " + deltaX + " " + deltaZ);
-          }
           let direction = this.rotation.y;
+
           if(deltaX > 0) {
             direction = 0;
           } else if(deltaX < 0) {
@@ -398,19 +397,6 @@
           } else if(deltaZ < 0) {
             direction = Math.PI / 2;
           } 
-          // if (this.position.x < moveX) {
-          //   // Towards east
-          //   direction = Math.PI / 2;
-          // } else if (this.position.x > moveX) {
-          //   // Towards west
-          //   direction = (3 * Math.PI) / 2 + 1;
-          // } else if (this.position.z > moveZ) {
-          //   // Towards north
-          //   direction = 2 * Math.PI;
-          // } else if (this.position.z < moveZ) {
-          //   // Towards south
-          //   direction = Math.PI;
-          // }
 
           this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
