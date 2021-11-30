@@ -81,7 +81,6 @@
         readTextFile("data.json", (text) => {
           data = JSON.parse(text);
           dataReady = true;
-          console.log(data);
         });
 
         // SCENE
@@ -177,25 +176,12 @@
 
       function updateScene() {
         if (dataReady) {
-          {
-            if (loadProgress == data.cars_number) {
-              for (let car of cars) {
-                car.moveCar(0, 0);
-
-                // car.position.x = 0;
-                // car.position.z = 0;
-              }
-            }
-            //model.rotation.y = model.rotation.y + 0.01;
-          }
-
           if (camera && camera.viewNum == 0) {
             camera.orbitControls.update();
           }
           if (camera && camera.viewNum == 5) {
             camera.setInModelView(model);
           }
-          console.log(data.frames.length);
           if (k < data.frames.length) {
             for (let i = 0; i < data.frames[k].cars.length; i++) {
               let scaleFactorLocal = 1;
@@ -209,7 +195,6 @@
                 let car = new SportsCar2(carX, carZ);
                 car.name = carID;
                 cars.push(car);
-                console.log(cars);
                 scene.add(car);
               } else {
                 //car.moveCar(carX - 500 / scaleFactorLocal, carZ - 500 / scaleFactorLocal);
@@ -220,13 +205,14 @@
               const traffLightState = data.frames[k].lights[i].state;
               const traffLightID = data.frames[k].lights[i].id;
 
-              console.log(traffLightID);
-              console.log(traffLightState);
-
               if (traffLightID == 1) {
                 traffic3.changeState(traffLightState);
               } else if (traffLightID == 2) {
                 traffic4.changeState(traffLightState);
+              } else if (traffLightID == 3) {
+                traffic1.changeState(traffLightState);
+              } else if (traffLightID == 4) {
+                traffic2.changeState(traffLightState);
               }
             }
           }
@@ -395,20 +381,36 @@
         }
 
         moveCar(moveX, moveZ) {
-          let direction;
-          if (this.position.x < moveX) {
-            // Towards east
-            direction = Math.PI / 2;
-          } else if (this.position.x > moveX) {
-            // Towards west
-            direction = (3 * Math.PI) / 2;
-          } else if (this.position.z > moveZ) {
-            // Towards north
-            direction = 2 * Math.PI;
-          } else if (this.position.z < moveZ) {
-            // Towards south
-            direction = Math.PI;
+          let deltaX = moveX - this.position.x;
+          let deltaZ = moveZ - this.position.z;
+          if(this.name == 5){
+            console.log(this.position.x, this.position.z);
+            console.log(moveX, moveZ);
+            console.log("Car 1: " + deltaX + " " + deltaZ);
           }
+          let direction = this.rotation.y;
+          if(deltaX > 0) {
+            direction = 0;
+          } else if(deltaX < 0) {
+            direction = Math.PI;
+          } else if(deltaZ > 0) {
+            direction = 3 * Math.PI / 2;
+          } else if(deltaZ < 0) {
+            direction = Math.PI / 2;
+          } 
+          // if (this.position.x < moveX) {
+          //   // Towards east
+          //   direction = Math.PI / 2;
+          // } else if (this.position.x > moveX) {
+          //   // Towards west
+          //   direction = (3 * Math.PI) / 2 + 1;
+          // } else if (this.position.z > moveZ) {
+          //   // Towards north
+          //   direction = 2 * Math.PI;
+          // } else if (this.position.z < moveZ) {
+          //   // Towards south
+          //   direction = Math.PI;
+          // }
 
           this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
