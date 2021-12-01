@@ -36,7 +36,10 @@
 
       let renderer,
         scene,
-        camera,
+        camera1,
+        camera2,
+        camera3,
+        camera4,
         orbitControls,
         stats,
         gui,
@@ -50,6 +53,7 @@
         model;
       let loadProgress = 0;
       let cars = [];
+      window.multiview = false;
 
       function readTextFile(file, callback) {
         var rawFile = new XMLHttpRequest();
@@ -70,6 +74,7 @@
         renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
         renderer.setClearColor(new THREE.Color(0, 0, 0));
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setScissorTest(true);
         document.body.appendChild(renderer.domElement);
 
         scene = new THREE.Scene();
@@ -116,15 +121,18 @@
         // const cars = [];
 
         // CAMERA (PERSPECTIVE)
-        const fov = 60; // Field ov view
-        const aspect = window.innerWidth / window.innerHeight;
-        const near = 0.01;
-        const far = 10000.0;
-        camera = new Camera(fov, aspect, near, far);
-        camera.position.set(-100, 100, 300);
+        camera1 = new Camera();
+        camera1.viewNum = 0;
+        camera2 = new Camera();
+        camera2.viewNum = 2;
+        camera3 = new Camera();
+        camera3.viewNum = 3;
+        camera4 = new Camera();
+        camera4.viewNum = 4;
+        camera1.position.set(-100, 100, 300);
 
         // CAMERA CONTROLS
-        orbitControls = new OrbitControls(camera, renderer.domElement);
+        orbitControls = new OrbitControls(camera1, renderer.domElement);
         //orbitControls.target = model.position;
         orbitControls.update();
 
@@ -152,16 +160,20 @@
         // GUI-Model
 
         guiCameraMenu
-          .add(camera, "viewNum")
+          .add(camera1, "viewNum")
           .min(0)
           .max(5)
           .step(1)
-          .setValue(camera.viewNum)
+          .setValue(camera1.viewNum)
           .name("Change view")
           .listen()
           .onChange(function (value) {
             camera.updateView();
           });
+
+          guiCameraMenu.add(window, "multiview").setValue(window.multiview).name("Multiview").listen().onChange(function(value) {
+                
+              });
 
         // DRAW SCENE IN A RENDER LOOP (ANIMATION)
         renderLoop();
@@ -173,19 +185,56 @@
           requestAnimationFrame(updateScene);
         }, 1000 / 24);
 
-        renderer.render(scene, camera); // DRAW THE SCENE GRAPH
+        renderer.render(scene, camera1); // DRAW THE SCENE GRAPH
         //updateScene();
         stats.end();
         requestAnimationFrame(renderLoop);
       }
 
       function updateScene() {
+        if(!window.multiview) {
+            camera1.aspect =  window.innerWidth / window.innerHeight;
+            camera1.updateProjectionMatrix();
+            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+            renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
+            renderer.render(scene, camera1);
+        }
+        else {
+            // CAMERA 1
+            camera1.aspect = window.innerWidth/2. /  (window.innerHeight/2);
+            camera1.updateProjectionMatrix();
+            renderer.setViewport(window.innerWidth/2., window.innerHeight/2, window.innerWidth/2., window.innerHeight/2);
+            renderer.setScissor(window.innerWidth/2., window.innerHeight/2, window.innerWidth/2., window.innerHeight/2);
+            renderer.render(scene, camera1);
+
+            // CAMERA 2
+            camera2.aspect = window.innerWidth/2. / (window.innerHeight/2);
+            camera2.updateProjectionMatrix();
+            renderer.setViewport(0, window.innerHeight/2, window.innerWidth/2., window.innerHeight/2);
+            renderer.setScissor(0, window.innerHeight/2, window.innerWidth/2., window.innerHeight/2);
+            renderer.render(scene, camera2);
+
+            // CAMERA 3
+            camera3.aspect = window.innerWidth/2. / (window.innerHeight/2);
+            camera3.updateProjectionMatrix();
+            renderer.setViewport(0, 0, window.innerWidth/2., window.innerHeight/2);
+            renderer.setScissor(0, 0, window.innerWidth/2., window.innerHeight/2);
+            renderer.render(scene, camera3);
+
+            // CAMERA 4
+            camera4.aspect = window.innerWidth/2. / (window.innerHeight/2);
+            camera4.updateProjectionMatrix();
+            renderer.setViewport(window.innerWidth/2, 0, window.innerWidth/2., window.innerHeight/2);
+            renderer.setScissor(window.innerWidth/2, 0, window.innerWidth/2., window.innerHeight/2);
+            renderer.render(scene, camera4);
+        }
+
         if (dataReady) {
-          if (camera && camera.viewNum == 0) {
-            camera.orbitControls.update();
+          if (camera1 && camera1.viewNum == 0) {
+            camera1.orbitControls.update();
           }
-          if (camera && camera.viewNum == 5) {
-            camera.setInModelView(model);
+          if (camera1 && camera1.viewNum == 5) {
+            camera1.setInModelView(model);
           }
           if (k < data.frames.length) {
             for (let i = 0; i < data.frames[k].cars.length; i++) {
@@ -236,9 +285,25 @@
       window.addEventListener(
         "resize",
         () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
+            if(!window.multiview) {
+                camera1.aspect = window.innerWidth / window.innerHeight;
+                camera1.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            } else {
+                // CAMERA 1
+                camera1.aspect = window.innerWidth / 2. / (window.innerHeight / 2);
+                camera1.updateProjectionMatrix();
+                // CAMERA 2
+                camera2.aspect = window.innerWidth / 2. / (window.innerHeight / 2);
+                camera2.updateProjectionMatrix();
+                // CAMERA 3
+                camera3.aspect = window.innerWidth / 2. / (window.innerHeight / 2);
+                camera3.updateProjectionMatrix();
+                // CAMERA 4
+                camera4.aspect = window.innerWidth / 2. / (window.innerHeight / 2);
+                camera4.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }            
         },
         false
       );
