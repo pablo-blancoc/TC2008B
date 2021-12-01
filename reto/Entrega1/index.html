@@ -46,7 +46,8 @@
         traffic1,
         traffic2,
         traffic3,
-        traffic4;
+        traffic4,
+        model;
       let loadProgress = 0;
       let cars = [];
 
@@ -75,6 +76,10 @@
 
         // MODELS
         const scenary = new Scenary();
+
+        // Ambient Light
+        const ambientLight = new THREE.AmbientLight(0x26ff26, 0.5);
+        scene.add(ambientLight);
 
         // LOAD JSON
         //usage:
@@ -192,12 +197,14 @@
               let car = scene.getObjectByName(carID);
 
               if (!car) {
-                let car = new SportsCar2(carX, carZ);
+                let car = new LODCar(carX, carZ);
                 car.name = carID;
+                if(carID == 5){
+                  model = car;
+                }
                 cars.push(car);
                 scene.add(car);
               } else {
-                //car.moveCar(carX - 500 / scaleFactorLocal, carZ - 500 / scaleFactorLocal);
                 car.moveCar(carX, carZ);
               }
             }
@@ -281,6 +288,7 @@
         }
 
         setInModelView(model) {
+          console.log(model);
           this.position.set(
             model.position.x - 0.5,
             model.position.y + 1.7,
@@ -399,6 +407,37 @@
 
           this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
+        }
+      }
+
+      class LODCar extends THREE.LOD {
+        constructor(x, z){
+          super();
+          let geometry = new THREE.BoxGeometry(4, 2, 1.8);
+          let mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+          let carModel = new SportsCar2(0, 0);
+          this.addLevel(carModel, 100);
+          this.addLevel(mesh, 110);
+        }
+
+        moveCar(moveX, moveZ) {
+          let deltaX = moveX - this.position.x;
+          let deltaZ = moveZ - this.position.z;
+          let direction = this.rotation.y;
+
+          if(deltaX > 0) {
+            direction = 0;
+          } else if(deltaX < 0) {
+            direction = Math.PI;
+          } else if(deltaZ > 0) {
+            direction = 3 * Math.PI / 2;
+          } else if(deltaZ < 0) {
+            direction = Math.PI / 2;
+          } 
+          
+          this.position.set(moveX, -0.5, moveZ);
+          this.rotation.set(0, direction, 0);
+          
         }
       }
 
