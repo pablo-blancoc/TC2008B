@@ -47,8 +47,13 @@
         traffic2,
         traffic3,
         traffic4,
-        model;
+        model,
+        camera1,
+        camera2,
+        camera3,
+        camera4;
       let loadProgress = 0;
+      window.multiview = false;
       let cars = [];
 
       function readTextFile(file, callback) {
@@ -70,6 +75,7 @@
         renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
         renderer.setClearColor(new THREE.Color(0, 0, 0));
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setScissorTest(true);
         document.body.appendChild(renderer.domElement);
 
         scene = new THREE.Scene();
@@ -80,6 +86,8 @@
         // Ambient Light
         const ambientLight = new THREE.AmbientLight(0x26ff26, 0.5);
         scene.add(ambientLight);
+
+        //Multiview camera
 
         // LOAD JSON
         //usage:
@@ -106,6 +114,7 @@
         traffic3 = new TrafficLight(7.5, 6.59 - 1, -18.5, 90);
         traffic4 = new TrafficLight(-8.55, 6.59 - 1, 15.1, 270);
         scene.add(traffic1);
+
         scene.add(traffic2);
         scene.add(traffic3);
         scene.add(traffic4);
@@ -120,18 +129,26 @@
         const aspect = window.innerWidth / window.innerHeight;
         const near = 0.01;
         const far = 10000.0;
-        camera = new Camera(fov, aspect, near, far);
+
+        // SETUP STATS
+        stats = new Stats();
+        stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+        document.body.appendChild(stats.dom);
+
+        camera = new Camera();
+        camera.setPerspectiveView();
+        camera2 = new Camera();
+        camera2.setTopView();
+        camera3 = new Camera();
+        camera3.setFrontView();
+        camera4 = new Camera();
+        camera4.setSideView();
         camera.position.set(-100, 100, 300);
 
         // CAMERA CONTROLS
         orbitControls = new OrbitControls(camera, renderer.domElement);
         //orbitControls.target = model.position;
         orbitControls.update();
-
-        // SETUP STATS
-        stats = new Stats();
-        stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-        document.body.appendChild(stats.dom);
 
         // GUI
         gui = new dat.GUI();
@@ -163,6 +180,13 @@
             camera.updateView();
           });
 
+        guiCameraMenu
+          .add(window, "multiview")
+          .setValue(window.multiview)
+          .name("Multiview")
+          .listen()
+          .onChange(function (value) {});
+
         // DRAW SCENE IN A RENDER LOOP (ANIMATION)
         renderLoop();
       }
@@ -177,12 +201,88 @@
         //updateScene();
         stats.end();
         requestAnimationFrame(renderLoop);
+
+        if (!window.multiview) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+          renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
+          renderer.render(scene, camera);
+        } else {
+          // CAMERA 1
+          camera.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+          camera.updateProjectionMatrix();
+          renderer.setViewport(
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.setScissor(
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.render(scene, camera);
+
+          // CAMERA 2
+          camera2.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+          camera2.updateProjectionMatrix();
+          renderer.setViewport(
+            0,
+            window.innerHeight / 2,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.setScissor(
+            0,
+            window.innerHeight / 2,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.render(scene, camera2);
+
+          // CAMERA 3
+          camera3.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+          camera3.updateProjectionMatrix();
+          renderer.setViewport(
+            0,
+            0,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.setScissor(
+            0,
+            0,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.render(scene, camera3);
+
+          // CAMERA 4
+          camera4.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+          camera4.updateProjectionMatrix();
+          renderer.setViewport(
+            window.innerWidth / 2,
+            0,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.setScissor(
+            window.innerWidth / 2,
+            0,
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+          renderer.render(scene, camera4);
+        }
       }
 
       function updateScene() {
         if (dataReady) {
           if (camera && camera.viewNum == 0) {
-            camera.orbitControls.update();
+            //camera.orbitControls.update();
           }
           if (camera && camera.viewNum == 5) {
             camera.setInModelView(model);
@@ -199,7 +299,7 @@
               if (!car) {
                 let car = new LODCar(carX, carZ);
                 car.name = carID;
-                if(carID == 5){
+                if (carID == 5) {
                   model = car;
                 }
                 cars.push(car);
@@ -224,7 +324,7 @@
             }
             k++;
           }
-          if(k == data.frames.length ) {
+          if (k == data.frames.length) {
             k = 0;
           }
         }
@@ -236,9 +336,25 @@
       window.addEventListener(
         "resize",
         () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
+          if (!window.multiview) {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          } else {
+            // CAMERA 1
+            camera.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+            camera.updateProjectionMatrix();
+            // CAMERA 2
+            camera2.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+            camera2.updateProjectionMatrix();
+            // CAMERA 3
+            camera3.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+            camera3.updateProjectionMatrix();
+            // CAMERA 4
+            camera4.aspect = window.innerWidth / 2 / (window.innerHeight / 2);
+            camera4.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          }
         },
         false
       );
@@ -253,6 +369,10 @@
           super(fov, aspect, near, far);
 
           this.viewNum = 0;
+          this.perspectiveView = true;
+          this.topView = false;
+          this.frontView = false;
+          this.sideView = false;
 
           // orbit controls
           this.orbitControls = new OrbitControls(this, renderer.domElement);
@@ -264,6 +384,10 @@
           this.orbitControls.target = new THREE.Vector3(0, 0, 0);
           this.up.set(0, 1, 0);
           this.orbitControls.update();
+          this.perspectiveView = true;
+          this.topView = false;
+          this.frontView = false;
+          this.sideView = false;
         }
 
         setTopView() {
@@ -271,6 +395,10 @@
           this.orbitControls.target = new THREE.Vector3(0, 0, 0);
           this.up.set(-1, 0, 0);
           this.orbitControls.update();
+          this.perspectiveView = false;
+          this.topView = true;
+          this.frontView = false;
+          this.sideView = false;
         }
 
         setFrontView() {
@@ -278,6 +406,10 @@
           this.orbitControls.target = new THREE.Vector3(0, 0, 0);
           this.up.set(0, 1, 0);
           this.orbitControls.update();
+          this.perspectiveView = false;
+          this.topView = false;
+          this.frontView = true;
+          this.sideView = false;
         }
 
         setSideView() {
@@ -285,6 +417,10 @@
           this.orbitControls.target = new THREE.Vector3(0, 0, 0);
           this.up.set(0, 1, 0);
           this.orbitControls.update();
+          this.perspectiveView = false;
+          this.topView = false;
+          this.frontView = false;
+          this.sideView = true;
         }
 
         setInModelView(model) {
@@ -395,15 +531,15 @@
           let deltaZ = moveZ - this.position.z;
           let direction = this.rotation.y;
 
-          if(deltaX > 0) {
+          if (deltaX > 0) {
             direction = 0;
-          } else if(deltaX < 0) {
+          } else if (deltaX < 0) {
             direction = Math.PI;
-          } else if(deltaZ > 0) {
-            direction = 3 * Math.PI / 2;
-          } else if(deltaZ < 0) {
+          } else if (deltaZ > 0) {
+            direction = (3 * Math.PI) / 2;
+          } else if (deltaZ < 0) {
             direction = Math.PI / 2;
-          } 
+          }
 
           this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
@@ -411,10 +547,13 @@
       }
 
       class LODCar extends THREE.LOD {
-        constructor(x, z){
+        constructor(x, z) {
           super();
           let geometry = new THREE.BoxGeometry(4, 2, 1.8);
-          let mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+          let mesh = new THREE.Mesh(
+            geometry,
+            new THREE.MeshPhongMaterial({ color: 0xffffff })
+          );
           let carModel = new SportsCar2(0, 0);
           this.addLevel(carModel, 100);
           this.addLevel(mesh, 110);
@@ -425,19 +564,18 @@
           let deltaZ = moveZ - this.position.z;
           let direction = this.rotation.y;
 
-          if(deltaX > 0) {
+          if (deltaX > 0) {
             direction = 0;
-          } else if(deltaX < 0) {
+          } else if (deltaX < 0) {
             direction = Math.PI;
-          } else if(deltaZ > 0) {
-            direction = 3 * Math.PI / 2;
-          } else if(deltaZ < 0) {
+          } else if (deltaZ > 0) {
+            direction = (3 * Math.PI) / 2;
+          } else if (deltaZ < 0) {
             direction = Math.PI / 2;
-          } 
-          
+          }
+
           this.position.set(moveX, -0.5, moveZ);
           this.rotation.set(0, direction, 0);
-          
         }
       }
 
